@@ -55,6 +55,10 @@ contract Staking is ReentrancyGuard, Ownable, Pausable {
         return totalStaked;
     }
 
+    function stakedBalanceOf(address _account) external view returns (uint256) {
+        return balances[_account];
+    }
+
     function balanceOf(address _account) external view returns (uint256) {
         return
             balances[_account] +
@@ -64,10 +68,12 @@ contract Staking is ReentrancyGuard, Ownable, Pausable {
             1e18;
     }
 
-    function pendingEarnings(address _account) external view returns (uint256) {
+    function earningsOf(address _account) external view returns (uint256) {
         return
+            earnings[_account] +
             ((currentRewardPerToken - rewardAtDeposit[_account]) *
-                balances[_account]) / 1e18;
+                balances[_account]) /
+            1e18;
     }
 
     /*╔═════════════════════════════════╗

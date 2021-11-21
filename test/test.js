@@ -66,5 +66,61 @@ describe("Staking", function () {
       expect(await token.balanceOf(degen1.address)).to.be.equal(4000);
       expect(await token.balanceOf(degen2.address)).to.be.equal(8000);
     });
+    it("Multistaking with 2 distributions", async function () {
+      await staking.connect(degen1).stake(100);
+      await staking.connect(degen2).stake(200);
+
+      await token.mintRewards(900);
+      await staking.distribute(900);
+      // 100+300 200+600
+
+      await staking.connect(degen1).stake(100);
+      // 200+300 200+600
+
+      await token.mintRewards(1000);
+      await staking.distribute(1000);
+      // 200+300+500 200+600+500
+
+      expect(await staking.balanceOf(degen1.address)).to.be.equal(1000);
+      expect(await staking.balanceOf(degen2.address)).to.be.equal(1300);
+
+      await await staking.connect(degen1).withdraw();
+      await staking.connect(degen2).withdraw();
+
+      expect(await token.balanceOf(degen1.address)).to.be.equal(1800); // 1000-100+300-100+500+200
+      expect(await token.balanceOf(degen2.address)).to.be.equal(3100); // 2000-200+600+500+200
+    });
+    it("Multistaking with one distribution", async function () {
+      await staking.connect(degen1).stake(100);
+      await staking.connect(degen2).stake(200);
+
+      await staking.connect(degen1).stake(100);
+      // 200 200
+      await token.mintRewards(1000);
+      await staking.distribute(1000);
+      // 700 700
+
+      expect(await staking.balanceOf(degen1.address)).to.be.equal(700);
+      expect(await staking.balanceOf(degen2.address)).to.be.equal(700);
+
+      await await staking.connect(degen1).withdraw();
+      await staking.connect(degen2).withdraw();
+
+      expect(await token.balanceOf(degen1.address)).to.be.equal(1500); // 1000-200+500+200
+      expect(await token.balanceOf(degen2.address)).to.be.equal(2500); // 2000-200+500+200
+    });
+    it("Claim and stake", async function () {
+      await staking.connect(degen1).stake(100);
+      await staking.connect(degen2).stake(200);
+      await token.mintRewards(300);
+      await staking.distribute(300);
+      await staking.connect(degen1).claimAndStakeAll();
+      // 50%-50%
+      await token.mintRewards(200);
+      await staking.distribute(200);
+
+      expect(await staking.balanceOf(degen1.address)).to.be.equal(300);
+      expect(await staking.balanceOf(degen2.address)).to.be.equal(500);
+    });
   });
 });
